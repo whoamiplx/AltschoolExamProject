@@ -1,0 +1,73 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Caveat:wght@400;700&display=swap');
+
+:root {
+    --bg-primary: #ffffffc5;
+    --bg-surface: #e5e8f5;
+    --border-light: #e0e0e0;
+    --bg-input: #f0f0f0;
+    --text-dark: #000000;
+    --text-medium: #666666;
+    --text-light: #f3f3f4;
+    --text-black: #1A1A1A;
+    --text-link: #007bff;
+    --shadow-small: rgba(0, 0, 0, 0.05);
+    --shadow-medium: rgba(0, 0, 0, 0.1);
+    --shadow-strong: rgba(0, 0, 0, 0.15);
+    --card-bg-color: #a7caed;
+    --card-border-color: #68adf1;
+    --accent-green: #4caf50;
+    --accent-green-dark: #218838;
+    --accent-red: #dc3545;
+    --accent-red-dark: #c82333;
+    --accent-blue: #007bff;
+    --accent-blue-dark: #0056b3;
+    --status-completed-color: #007bff;
+    --status-pending-color: #6f42c1;
+}
+
+html[data-theme='dark'] {
+    --bg-primary: #1A1A1A;
+    --bg-surface: #2C2C2C;
+    --border-light: #444444;
+    --bg-input: #3A3A3A;
+    --text-dark: #E0E0E0;
+    --text-medium: #3f5c82;
+    --text-light: #1A1A1A;
+    --text-black: #FFFFFF;
+    --text-link: #69C0FF;
+    --shadow-small: rgba(255, 255, 255, 0.05);
+    --shadow-medium: rgba(255, 255, 255, 0.1);
+    --shadow-strong: rgba(255, 255, 255, 0.15);
+    --card-bg-color: #1E3A5F;
+    --card-border-color: #2C4875;
+    --accent-green: #4caf50;
+    --accent-green-dark: #388E3C;
+    --accent-red: #DC3545;
+    --accent-red-dark: #C82333;
+    --accent-blue: #64B5F6;
+    --accent-blue-dark: #42A5F5;
+    --status-completed-color: #64B5F6;
+    --status-pending-color: #BA68C8;
+}
+
+body {
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: var(--bg-primary);
+    color: var(--text-dark);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0px;
+    padding: 0px;
+}
+
+:focus-visible {
+    outline: 2px solid var(--accent-blue);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
