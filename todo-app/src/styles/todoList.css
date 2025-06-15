@@ -38,7 +38,7 @@
 
 .todo-list-header h2 {
     font-size: 2.2em;
-    color: var(--text-dark);
+    color: #d1ab43a6;
     font-weight: 700;
     margin: 0;
     width: 100%;
@@ -53,7 +53,7 @@
 }
 
 .add-todo-button {
-    background-color: var(--accent-green);
+    background-color: #d5339a9e ;
     color: var(--text-light);
     border: none;
     padding: 12px 25px;
@@ -69,7 +69,8 @@
 }
 
 .add-todo-button:hover {
-    background-color: var(--accent-green-dark);
+    background-color: #d5339a;
+    color: var(--text-light);
     transform: translateY(-2px);
     box-shadow: 0 6px 12px var(--shadow-medium);
 }
@@ -86,14 +87,17 @@
     color: var(--text-dark);
     outline: none;
     transition: border-color 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
-    background-color: var(--bg-input);
+    background-color: #e4a1c14b;
     flex-grow: 1;
     min-width: 200px;
 }
-
+.search-input:hover{
+    border-color: var(--text-medium);
+    background-color: #f9f9f9;
+}
 .search-input:focus {
-    border-color: var(--accent-blue);
-    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+    border-color: #ffb6c1;
+    box-shadow: 0 0 0 3px #e15d896d;
 }
 
 .filter-dropdown-button {
@@ -497,14 +501,14 @@
 }
 
 .ant-modal-footer .ant-btn-default {
-    background-color: var(--text-medium);
+    background-color: var(--accent-red);
     border-color: var(--text-medium);
     color: var(--text-light);
 }
 .ant-modal-footer .ant-btn-default:hover {
     background-color: var(--secondary-gray-dark) !important;
     border-color: var(--secondary-gray-dark) !important;
-    color: var(--text-light) !important;
+    color: #ffb6c1 !important;
     transform: translateY(-1px);
 }
 
