@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios, { AxiosError } from 'axios';
 
-// Define the Todo interface
 interface Todo {
   id: string;
   title: string;
@@ -11,7 +10,6 @@ interface Todo {
   completed: boolean;
 }
 
-// Define the error response interface
 interface ErrorResponse {
   message: string;
 }
