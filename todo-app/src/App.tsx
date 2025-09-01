@@ -1,40 +1,36 @@
-import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import React, { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import TodoList from './pages/TodoList';
+import TodoDetails from './pages/TodoDetails';
 import NotFound from './pages/NotFound';
 import ErrorBoundary from './components/ErrorBoundary';
-import './index.css';
-import TodoDetails from './pages/TodoDetails';
+
+type Theme = 'light' | 'dark';
 
 const App: React.FC = () => {
-  const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>('light');
+  const [currentTheme, setCurrentTheme] = useState<Theme>('light');
 
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', currentTheme);
-  }, [currentTheme]);
-
-  const toggleTheme = (): void => {
-    setCurrentTheme(prevTheme => (prevTheme === 'light' ? 'dark' : 'light'));
+  const toggleTheme = () => {
+    setCurrentTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
   };
 
   return (
-    <Router>
+    <div className={`app ${currentTheme}`}>
       <ErrorBoundary>
-        <Routes>
-          <Route
-            path="/"
-            element={
-              <TodoList
-                toggleTheme={toggleTheme}
-                currentTheme={currentTheme}
-              />
-            }
-          />
-          <Route path="/todos/:id" element={<TodoDetails />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <Router>
+          <div className="theme-toggle">
+            <button onClick={toggleTheme}>
+              Switch to {currentTheme === 'light' ? 'dark' : 'light'} mode
+            </button>
+          </div>
+          <Routes>
+            <Route path="/" element={<TodoList />} />
+            <Route path="/todo/:id" element={<TodoDetails />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Router>
       </ErrorBoundary>
-    </Router>
+    </div>
   );
 };
 

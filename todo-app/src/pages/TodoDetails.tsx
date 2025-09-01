@@ -1,42 +1,51 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import { useParams, Link } from 'react-router-dom';
-import { Button } from 'antd';
-import '../styles/todoList.css';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import axios, { AxiosError } from 'axios';
 
-const TodoDetails = () => {
-  const { id } = useParams();
-  const [todo, setTodo] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+// Define the Todo interface
+interface Todo {
+  id: string;
+  title: string;
+  message: string;
+  userId: string;
+  completed: boolean;
+}
 
-  const BASE_URL = `https://jsonplaceholder.typicode.com/todos/${id}`;
+// Define the error response interface
+interface ErrorResponse {
+  message: string;
+}
+
+const TodoDetails: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  
+  const [todo, setTodo] = useState<Todo | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string>('');
 
   useEffect(() => {
     const fetchTodo = async () => {
-      setLoading(true);
-      setError(null);
+      if (!id) {
+        setError('Todo ID is required');
+        setLoading(false);
+        return;
+      }
+
       try {
-        const response = await axios.get(BASE_URL);
+        const response = await axios.get<Todo>(`/api/todos/${id}`);
         setTodo(response.data);
+        setError('');
       } catch (err) {
-        let errorMessage = 'Failed to load todo details.';
-        if (axios.isAxiosError(err)) {
-            if (err.response) {
-                if (err.response.status === 404) {
-                    errorMessage = 'Todo not found.';
-                } else {
-                    errorMessage = `Error: ${err.response.status} - ${err.response.statusText || 'Server Error'}`;
-                }
-            } else if (err.request) {
-              errorMessage = 'Network error. No response received from server.';
-            } else {
-              errorMessage = err.message;
-            }
+        const axiosError = err as AxiosError<ErrorResponse>;
+        
+        if (axiosError.response?.data?.message) {
+          setError(axiosError.response.data.message);
+        } else if (axiosError.message) {
+          setError(axiosError.message);
         } else {
-          errorMessage = err.message;
+          setError('An unexpected error occurred');
         }
-        setError(new Error(errorMessage));
       } finally {
         setLoading(false);
       }
@@ -45,13 +54,31 @@ const TodoDetails = () => {
     fetchTodo();
   }, [id]);
 
+  const handleToggleComplete = async () => {
+    if (!todo) return;
+
+    try {
+      const updatedTodo = { ...todo, completed: !todo.completed };
+      const response = await axios.put<Todo>(`/api/todos/${todo.id}`, updatedTodo);
+      setTodo(response.data);
+    } catch (err) {
+      const axiosError = err as AxiosError<ErrorResponse>;
+      
+      if (axiosError.response?.data?.message) {
+        setError(axiosError.response.data.message);
+      } else if (axiosError.message) {
+        setError(axiosError.message);
+      } else {
+        setError('Failed to update todo');
+      }
+    }
+  };
+
   if (loading) {
     return (
-      <main className="todo-detail-container" role="status" aria-live="polite">
-        <div className="todo-detail-wrapper">
-          <p className="loading-message">Loading todo details...</p>
-        </div>
-      </main>
+      <div className="todo-detail-container">
+        <div className="loading">Loading todo details...</div>
+      </div>
     );
   }
 
@@ -59,7 +86,7 @@ const TodoDetails = () => {
     return (
       <main className="todo-detail-container" role="alert" aria-live="assertive">
         <div className="todo-detail-wrapper">
-          <p className="error-message">{error.message}</p>
+          <p className="error-message">{error}</p>
           <Link to="/" className="back-button">Back to Todo List</Link>
         </div>
       </main>
@@ -68,9 +95,9 @@ const TodoDetails = () => {
 
   if (!todo) {
     return (
-      <main className="todo-detail-container">
+      <main className="todo-detail-container" role="alert" aria-live="assertive">
         <div className="todo-detail-wrapper">
-          <p className="error-message">No todo found with ID: {id}</p>
+          <p className="error-message">Todo not found</p>
           <Link to="/" className="back-button">Back to Todo List</Link>
         </div>
       </main>
@@ -80,23 +107,27 @@ const TodoDetails = () => {
   return (
     <main className="todo-detail-container">
       <div className="todo-detail-wrapper">
-        <header className="detail-header">
-          <h2>Todo Details</h2>
-        </header>
-        <section className="detail-info">
-          <p><strong>Title:</strong> {todo.title}</p>
-          <p><strong>ID:</strong> {todo.id}</p>
-          <p><strong>User ID:</strong> {todo.userId}</p>
-          <p>
-            <strong>Status:</strong> {' '}
-            <span className={todo.completed ? 'status-completed' : 'status-pending'}>
-              {todo.completed ? 'Completed' : 'Pending'}
-            </span>
-          </p>
-        </section>
-        <Link to="/" className="back-button" aria-label="Back to todo list">
-          Back to Todo List
-        </Link>
+        <h1>{todo.title}</h1>
+        <div className="todo-content">
+          <p className="todo-message">{todo.message}</p>
+          <div className="todo-meta">
+            <p className="todo-status">
+              Status: <span className={todo.completed ? 'completed' : 'pending'}>
+                {todo.completed ? 'Completed' : 'Pending'}
+              </span>
+            </p>
+            <p className="todo-user">User ID: {todo.userId}</p>
+          </div>
+        </div>
+        <div className="todo-actions">
+          <button 
+            onClick={handleToggleComplete}
+            className={`toggle-btn ${todo.completed ? 'mark-pending' : 'mark-complete'}`}
+          >
+            {todo.completed ? 'Mark as Pending' : 'Mark as Complete'}
+          </button>
+          <Link to="/" className="back-button">Back to Todo List</Link>
+        </div>
       </div>
     </main>
   );
