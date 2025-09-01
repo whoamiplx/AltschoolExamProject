@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import axios from "axios";
+import axios,  { AxiosError } from 'axios';
 import { Link } from "react-router-dom";
 import {
   Checkbox,
@@ -10,6 +10,7 @@ import {
   notification,
   Dropdown,
   Menu,
+  MenuProps,
 } from "antd";
 import {
   PlusOutlined,
@@ -22,58 +23,80 @@ import {
 } from "@ant-design/icons";
 import "../styles/todoList.css";
 
-const TodoList = ({ toggleTheme, currentTheme }) => {
-  const [todos, setTodos] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState("all");
+// Type definitions
+interface Todo {
+  id: number;
+  title: string;
+  completed: boolean;
+  userId: number;
+}
 
-  const [isAddModalVisible, setIsAddModalVisible] = useState(false);
-  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
-  const [isDeleteConfirmVisible, setIsDeleteConfirmVisible] = useState(false);
-  const [editingTodo, setEditingTodo] = useState(null);
-  const [deletingTodoId, setDeletingTodoId] = useState(null);
+interface TodoFormValues {
+  title: string;
+  completed?: boolean;
+}
 
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [successModalTitle, setSuccessModalTitle] = useState("");
-  const [successModalMessage, setSuccessModalMessage] = useState("");
+interface TodoListProps {
+  toggleTheme: () => void;
+  currentTheme: "light" | "dark";
+}
 
-  const [addForm] = Form.useForm();
-  const [editForm] = Form.useForm();
+type FilterStatus = "all" | "completed" | "incomplete";
 
-  const todosPerPage = 10;
-  const BASE_URL = "https://jsonplaceholder.typicode.com/todos";
+const TodoList: React.FC<TodoListProps> = ({ toggleTheme, currentTheme }) => {
+  const [todos, setTodos] = useState<Todo[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<Error | null>(null);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
 
-  const displaySuccessModal = (title, message) => {
+  const [isAddModalVisible, setIsAddModalVisible] = useState<boolean>(false);
+  const [isEditModalVisible, setIsEditModalVisible] = useState<boolean>(false);
+  const [isDeleteConfirmVisible, setIsDeleteConfirmVisible] = useState<boolean>(false);
+  const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
+  const [deletingTodoId, setDeletingTodoId] = useState<number | null>(null);
+
+  const [showSuccessModal, setShowSuccessModal] = useState<boolean>(false);
+  const [successModalTitle, setSuccessModalTitle] = useState<string>("");
+  const [successModalMessage, setSuccessModalMessage] = useState<string>("");
+
+  const [addForm] = Form.useForm<TodoFormValues>();
+  const [editForm] = Form.useForm<TodoFormValues>();
+
+  const todosPerPage: number = 10;
+  const BASE_URL: string = "https://jsonplaceholder.typicode.com/todos";
+
+  const displaySuccessModal = (title: string, message: string): void => {
     setSuccessModalTitle(title);
     setSuccessModalMessage(message);
     setShowSuccessModal(true);
   };
 
   useEffect(() => {
-    const fetchTodos = async () => {
+    const fetchTodos = async (): Promise<void> => {
       setLoading(true);
       setError(null);
       try {
-        const response = await axios.get(BASE_URL);
+        const response = await axios.get<Todo[]>(BASE_URL);
         setTodos(response.data);
       } catch (err) {
         let errorMessage = "Oops! Failed to load todos.";
         if (axios.isAxiosError(err)) {
-          if (err.response) {
-            errorMessage = `Error: ${err.response.status} - ${
-              err.response.statusText || "Server Error"
+          const axiosError = err as AxiosError;
+          if (axiosError.response) {
+            errorMessage = `Error: ${axiosError.response.status} - ${
+              axiosError.response.statusText || "Server Error"
             }`;
-          } else if (err.request) {
+          } else if (axiosError.request) {
             errorMessage = "Network error. No response received from server.";
           } else {
-            errorMessage = err.message;
+            errorMessage = axiosError.message;
           }
-        } else {
+        } else if (err instanceof Error) {
           errorMessage = err.message;
         }
+        setError(new Error(errorMessage));
         notification.error({
           message: "API Error",
           description: errorMessage,
@@ -87,14 +110,14 @@ const TodoList = ({ toggleTheme, currentTheme }) => {
     fetchTodos();
   }, []);
 
-  const handleAddTodo = async (values) => {
+  const handleAddTodo = async (values: TodoFormValues): Promise<void> => {
     try {
-      const response = await axios.post(BASE_URL, {
+      const response = await axios.post<Todo>(BASE_URL, {
         title: values.title,
         completed: false,
         userId: 1,
       });
-      const newTodo = {
+      const newTodo: Todo = {
         ...response.data,
         id: Math.max(...todos.map((t) => t.id), 200) + 1,
       };
@@ -106,27 +129,28 @@ const TodoList = ({ toggleTheme, currentTheme }) => {
         `"${values.title}" has been added. (Note: JSONPlaceholder simulates this; data is not persistent)`
       );
     } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Could not add todo.";
       notification.error({
         message: "Add Todo Failed",
-        description: err.message || "Could not add todo.",
+        description: errorMessage,
         placement: "topRight",
       });
     }
   };
 
-  const handleEditClick = (todo) => {
+  const handleEditClick = (todo: Todo): void => {
     setEditingTodo(todo);
     editForm.setFieldsValue({ title: todo.title, completed: todo.completed });
     setIsEditModalVisible(true);
   };
 
-  const handleUpdateTodo = async (values) => {
+  const handleUpdateTodo = async (values: TodoFormValues): Promise<void> => {
     if (!editingTodo) return;
     try {
-      const updatedTodoData = {
+      const updatedTodoData: Todo = {
         id: editingTodo.id,
         title: values.title,
-        completed: values.completed,
+        completed: values.completed || false,
         userId: editingTodo.userId,
       };
       await axios.put(`${BASE_URL}/${editingTodo.id}`, updatedTodoData);
@@ -142,20 +166,22 @@ const TodoList = ({ toggleTheme, currentTheme }) => {
         `"${values.title}" has been updated. (Important notice: Data is not persistent as JSONPlaceholder simulates this)`
       );
     } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Could not update todo.";
       notification.error({
         message: "Todo Update Failed",
-        description: err.message || "Could not update todo.",
+        description: errorMessage,
         placement: "topRight",
       });
     }
   };
 
-  const handleDeleteClick = (id) => {
+  const handleDeleteClick = (id: number): void => {
     setDeletingTodoId(id);
     setIsDeleteConfirmVisible(true);
   };
 
-  const handleConfirmDelete = async () => {
+  const handleConfirmDelete = async (): Promise<void> => {
+    if (!deletingTodoId) return;
     try {
       await axios.delete(`${BASE_URL}/${deletingTodoId}`);
       setTodos((prevTodos) =>
@@ -168,15 +194,16 @@ const TodoList = ({ toggleTheme, currentTheme }) => {
         "Task has been deleted. (Important notice: Data is not persistent as JSONPlaceholder simulates this)"
       );
     } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Could not delete todo.";
       notification.error({
         message: "Sorry, Delete Failed",
-        description: err.message || "Could not delete todo.",
+        description: errorMessage,
         placement: "topRight",
       });
     }
   };
 
-  const filteredAndSearchedTodos = useMemo(() => {
+  const filteredAndSearchedTodos = useMemo((): Todo[] => {
     let filtered = todos;
 
     if (filterStatus === "completed") {
@@ -193,22 +220,22 @@ const TodoList = ({ toggleTheme, currentTheme }) => {
     return filtered;
   }, [todos, filterStatus, searchTerm]);
 
-  const indexOfLastTodo = currentPage * todosPerPage;
-  const indexOfFirstTodo = indexOfLastTodo - todosPerPage;
-  const currentTodos = filteredAndSearchedTodos.slice(
+  const indexOfLastTodo: number = currentPage * todosPerPage;
+  const indexOfFirstTodo: number = indexOfLastTodo - todosPerPage;
+  const currentTodos: Todo[] = filteredAndSearchedTodos.slice(
     indexOfFirstTodo,
     indexOfLastTodo
   );
-  const totalPages = Math.ceil(filteredAndSearchedTodos.length / todosPerPage);
+  const totalPages: number = Math.ceil(filteredAndSearchedTodos.length / todosPerPage);
 
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, filterStatus]);
 
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+  const paginate = (pageNumber: number): void => setCurrentPage(pageNumber);
 
-  const renderPageNumbers = () => {
-    const pageNumbers = [];
+  const renderPageNumbers = (): React.ReactNode[] => {
+    const pageNumbers: (number | string)[] = [];
     const maxPageButtons = 5;
 
     if (totalPages <= maxPageButtons) {
@@ -261,18 +288,19 @@ const TodoList = ({ toggleTheme, currentTheme }) => {
     );
   };
 
-  const filterMenu = (
-    <Menu
-      onClick={({ key }) => setFilterStatus(key)}
-      selectedKeys={[filterStatus]}
-      aria-label="Filter todos by status"
-      items={[
-        { key: "all", label: "All" },
-        { key: "completed", label: "Completed" },
-        { key: "incomplete", label: "Incomplete" },
-      ]}
-    />
-  );
+  const handleFilterMenuClick: MenuProps['onClick'] = ({ key }): void => {
+    setFilterStatus(key as FilterStatus);
+  };
+
+  const filterMenu: MenuProps = {
+    onClick: handleFilterMenuClick,
+    selectedKeys: [filterStatus],
+    items: [
+      { key: "all", label: "All" },
+      { key: "completed", label: "Completed" },
+      { key: "incomplete", label: "Incomplete" },
+    ],
+  };
 
   if (loading) {
     return (
@@ -328,7 +356,7 @@ const TodoList = ({ toggleTheme, currentTheme }) => {
             />
 
             <Dropdown
-              overlay={filterMenu}
+              menu={filterMenu}
               trigger={["click"]}
               placement="bottomRight"
             >
@@ -361,7 +389,7 @@ const TodoList = ({ toggleTheme, currentTheme }) => {
               Sorry, Nothing here. You either finished everything... or forgot to add them.
             </p>
           ) : (
-            currentTodos.map((todo) => (
+            currentTodos.map((todo: Todo) => (
               <div key={todo.id} className="todo-item-card">
                 <div className="todo-item-card-content">
                   <Checkbox
@@ -533,7 +561,7 @@ const TodoList = ({ toggleTheme, currentTheme }) => {
         okButtonProps={{ type: "danger" }}
       >
         <p>
-           Delete it like you delete red flags?
+          Delete it like you delete red flags?
         </p>
       </Modal>
 

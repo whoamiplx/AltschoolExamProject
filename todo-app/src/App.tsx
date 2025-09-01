@@ -6,14 +6,14 @@ import ErrorBoundary from './components/ErrorBoundary';
 import './index.css';
 import TodoDetails from './pages/TodoDetails';
 
-function App() {
-  const [currentTheme, setCurrentTheme] = useState('light');
+const App: React.FC = () => {
+  const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>('light');
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', currentTheme);
   }, [currentTheme]);
 
-  const toggleTheme = () => {
+  const toggleTheme = (): void => {
     setCurrentTheme(prevTheme => (prevTheme === 'light' ? 'dark' : 'light'));
   };
 
@@ -21,13 +21,21 @@ function App() {
     <Router>
       <ErrorBoundary>
         <Routes>
-          <Route path="/" element={<TodoList toggleTheme={toggleTheme} currentTheme={currentTheme} />} />
+          <Route
+            path="/"
+            element={
+              <TodoList
+                toggleTheme={toggleTheme}
+                currentTheme={currentTheme}
+              />
+            }
+          />
           <Route path="/todos/:id" element={<TodoDetails />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </ErrorBoundary>
     </Router>
   );
-}
+};
 
 export default App;
